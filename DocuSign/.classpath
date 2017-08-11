@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/hamcrest-core-1.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-annotations-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-core-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-databind-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-datatype-joda-2.1.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-jaxrs-base-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-jaxrs-json-provider-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jackson-module-jaxb-annotations-2.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jersey-client-1.19.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jersey-core-1.19.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jersey-multipart-1.19.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/joda-time-2.9.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/jsr311-api-1.1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/junit-4.12.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/migbase64-2.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/mimepull-1.9.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/docusign-java-client-master/docusign-java-client-master/target/lib/swagger-annotations-1.5.8.jar"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/humberto/OneDrive/Documents/org.apache.oltu.oauth2.client-1.0.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
