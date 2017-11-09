@@ -5,6 +5,14 @@ import com.docusign.esign.client.*;
 import com.docusign.esign.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import java.sql.Statement;
 //import java.io.File;
 //import java.awt.Desktop;
 //import junit.framework.Assert;
@@ -23,44 +31,312 @@ import java.util.ArrayList;
 import java.util.List;
 import java.awt.Desktop;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 //import java.util.ArrayList;
 //import java.io.IOException;
 //import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 
 import com.migcomponents.migbase64.Base64;
 
 public class docusignMain {
-	
+
+	 String IntegratorKey; 
+	 String sqlUrl = null;
+	 String BaseUrl = "https://demo.docusign.net/restapi";
+	 String RequestSignatureFilePath = null;
+	 String SignedFilesPath = null;
+	 // final String SignTest1File = "/src/test/docs/SignTest1.pdf";
+      String EnvelopeId;
+	  String Document ;
+	  String CompanySigneeName;
+	  String CompanySigneeEmail;
+	  String CustomerSigneeName;
+	  String CustomerSigneeEmail;
+	  String Status;
+	  String Response ;
+	  String UserName;
+	  String Password;
+	  String Request;
+	  
+	public docusignMain(String Request, String Document, String CompanySigneeName, String CompanySigneeEmail, String CustomerSigneeName, String CustomerSigneeEmail){
+		
+		boolean SqlUpdate = false;
+	 
+		String AccountId = null;
+
+		  
+		 // String Status= args[1];
+		  
+		    Properties prop = new Properties();
+		   	InputStream input = null;
+
+		   	try {
+		   		input = new FileInputStream("C:\\Users\\humberto\\OneDrive\\GitRepository\\DocuSign\\src\\resources\\config\\config.properties");
+
+		   		// load a properties file
+		   		prop.load(input);
+
+		   		// get the property value and print it out
+		   		System.out.println(prop.getProperty("IntegratorKey"));
+		   		 IntegratorKey=prop.getProperty("IntegratorKey");
+		   		System.out.println(prop.getProperty("UserName"));
+		   		UserName = prop.getProperty("UserName");
+		   		System.out.println(prop.getProperty("Password"));
+		   		Password =prop.getProperty("Password");
+		   		System.out.println(prop.getProperty("BaseUrl"));
+		   		BaseUrl = prop.getProperty("BaseUrl");
+		   		System.out.println(prop.getProperty("RequestSignatureFilePath"));
+		   		RequestSignatureFilePath = prop.getProperty("RequestSignatureFilePath");
+		   		System.out.println(prop.getProperty("SqliteUrl"));
+		   		sqlUrl = prop.getProperty("SqliteUrl");
+		   		
+		   	} catch (IOException ex) {
+		   		ex.printStackTrace();
+		   	} finally {
+		   		if (input != null) {
+		   			try {
+		   				input.close();
+		   			} catch (IOException e) {
+		   				e.printStackTrace();
+		   			}
+		   		}
+		   	}
+		
+		if (Request == "Send"){
+			  
+			  
+			  Sqlite sql = new Sqlite();
+			  Connection sqlConn = sql.connect(sqlUrl);
+			  boolean DocuSignInsert = sql.insertNew(Document, Status, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail, sqlConn);;
+			
+			  if (DocuSignInsert == true){
+				    
+				    String PathDocument = RequestSignatureFilePath + Document;
+				    
+				    DocSign sigrequest = new DocSign();
+				    
+					sigrequest.RequestASignature(PathDocument,CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail,UserName, Password, IntegratorKey,  BaseUrl);
+					EnvelopeId = sigrequest.EnvelopeId;
+					String NewStatus = sigrequest.Status;
+				
+					SqlUpdate= sql.update(EnvelopeId, Status, Document,NewStatus, sql.connect(sqlUrl));
+					
+					
+			        if (SqlUpdate = false){
+			        	Response = "Cound not Update Sqlite";
+			        	System.out.println("Could not Update");
+			        }
+			        else{
+			        	Response = "Sqlite Updated";
+			        	System.out.println("Updated");
+			        }
+			  }
+			  else{
+				  Response = "Sqlite could not be inserted.";
+				  System.out.println("Could not insert");
+				  
+			  }
+		  }
+		
+	   
+	}
+	public docusignMain(String Request){
+		Statement stmt = null;
+		Properties prop = new Properties();
+	   	InputStream input = null;
+
+	   	try {
+	   		input = new FileInputStream("C:\\Users\\humberto\\OneDrive\\GitRepository\\DocuSign\\src\\resources\\config\\config.properties");
+
+	   		// load a properties file
+	   		prop.load(input);
+
+	   		// get the property value and print it out
+	   		System.out.println(prop.getProperty("IntegratorKey"));
+	   		 IntegratorKey=prop.getProperty("IntegratorKey");
+	   		System.out.println(prop.getProperty("UserName"));
+	   		UserName = prop.getProperty("UserName");
+	   		System.out.println(prop.getProperty("Password"));
+	   		Password =prop.getProperty("Password");
+	   		System.out.println(prop.getProperty("BaseUrl"));
+	   		BaseUrl = prop.getProperty("BaseUrl");
+	   		System.out.println(prop.getProperty("SignedFilesPath"));
+	   		SignedFilesPath = prop.getProperty("SignedFilesPath");
+	   		System.out.println(prop.getProperty("SqliteUrl"));
+	   		sqlUrl = prop.getProperty("SqliteUrl");
+	   		
+	   	} catch (IOException ex) {
+	   		ex.printStackTrace();
+	   	} finally {
+	   		if (input != null) {
+	   			try {
+	   				input.close();
+	   			} catch (IOException e) {
+	   				e.printStackTrace();
+	   			}
+	   		}
+	   	}
+		
+		
+		if (Request == "Retrieve"){
+			
+			
+			try{
+				
+		   DocSign getDocument = new DocSign();
+			
+			Sqlite sql = new Sqlite();
+			 Connection sqlConn = sql.connect(sqlUrl);
+			 sqlConn.setAutoCommit(false);
+			 stmt = sqlConn.createStatement();
+			 ResultSet rs  = stmt.executeQuery("Select Document, EnvelopeId from DocuSign where Status='Sent'");
+			 while ( rs.next() ) {
+		         String Document = rs.getString("Document");
+		         String EnvelopeId = rs.getString("EnvelopeId");
+		         getDocument.DownLoadEnvelopeDocuments(Document,UserName,Password,IntegratorKey, BaseUrl, EnvelopeId,SignedFilesPath); 
+			 }
+			
+		    } catch(Exception e){
+		    	System.err.println(e.getClass().getName() + ": " + e.getMessage() );
+		    	System.exit(0);
+		    }
+			
+			
+		}
+		
+		
+		
+		
+		   
+	}  
+	  
   public static void main (String[] args) {
 	  
-	   //  final String UserName = "node_sdk@mailinator.com";
-	  final String UserName = "hescobedo@hotmail.com";
-		// final String Password = "qweqweasd";
-	  final String Password = "Beanbag01$";
-		// final String IntegratorKey = "ae30ea4e-3959-4d1c-b867-fcb57d2dc4df";
-		 final String IntegratorKey = "f771b51b-9943-475e-9cf6-d827df69488c"; 
+	     String UserName = "hescobedo@hotmail.com";
+	     String Password = "Beanbag01$";
+		 String IntegratorKey = "f771b51b-9943-475e-9cf6-d827df69488c"; 
+		 String sqlUrl = null;
 		// final String ClientSecret = "b4dccdbe-232f-46cc-96c5-b2f0f7448f8f";
 		 //final String RedirectURI = "https://www.docusign.com/api";
-
-		 final String BaseUrl = "https://demo.docusign.net/restapi";
+		 String BaseUrl = "https://demo.docusign.net/restapi";
 		// final String OAuthBaseUrl = "https://account-d.docusign.com";
 		// final String SignTest1File = "C:\\Users\\humberto\\OneDrive\\Documents\\docusign-java-client-master\\docusign-java-client-master\\src\\test\\docs\\SignTest1.pdf";
-		 final String SignTest1File = "/src/test/SignTest1.pdf";
+		// final String SignTest1File = "/resources/config/config.properties";
+		 String RequestSigntureFilePath = null;
 		 // final String SignTest1File = "/src/test/docs/SignTest1.pdf";
-	//	final String EnvelopeId = "48a37c6f-c484-43b7-b469-ec02f5207114";
-	  final String EnvelopeId = "c0f42f4f-b96d-412a-a674-9ff27c718d47";
-	//74fdd034-fe7f-4353-978d-5df964460711	 
+	     String EnvelopeId = "48a37c6f-c484-43b7-b469-ec02f5207114";
+	     // final String EnvelopeId = "c0f42f4f-b96d-412a-a674-9ff27c718d47";
+	     //74fdd034-fe7f-4353-978d-5df964460711	 
 		// final String EnvelopeId = "74fdd034-fe7f-4353-978d-5df964460711";
-   // ApiClient apiClient = new ApiClient(BaseUrl);
-       String AccountId = null;
-   
+    // ApiClient apiClient = new ApiClient(BaseUrl);
+		  String Document = "test2.pdf";
+		  String CompanySigneeName= "Company Signee";
+		  String CompanySigneeEmail= "hescobedo@hotmail.com";
+		  String CustomerSigneeName= "Customer Signee";
+		  String CustomerSigneeEmail= "hescobe@gmail.com";
+		  String Status= "Send";
+		   
+		
+		  docusignMain dMain = 
+		  new docusignMain("Send", Document, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail);
+		//  dMain..
+		  
+		  /*		 
+        String AccountId = null;
 
-    	ApiClient apiClient = new ApiClient(BaseUrl);
+ 
+	     Properties prop = new Properties();
+	   	InputStream input = null;
+
+	   	try {
+//  /resources/config/config.properties
+	   		input = new FileInputStream("C:\\Users\\humberto\\OneDrive\\GitRepository\\DocuSign\\src\\resources\\config\\config.properties");
+
+	   		// load a properties file
+	   		prop.load(input);
+
+	   		// get the property value and print it out
+	   		System.out.println(prop.getProperty("IntegratorKey"));
+	   		 IntegratorKey=prop.getProperty("IntegratorKey");
+	   		System.out.println(prop.getProperty("UserName"));
+	   		UserName = prop.getProperty("UserName");
+	   		System.out.println(prop.getProperty("Password"));
+	   		Password =prop.getProperty("Password");
+	   		System.out.println(prop.getProperty("BaseUrl"));
+	   		BaseUrl = prop.getProperty("BaseUrl");
+	   		System.out.println(prop.getProperty("RequestSignatureFilePath"));
+	   		RequestSigntureFilePath = prop.getProperty("RequestSignatureFilePath");
+	   		System.out.println(prop.getProperty("SqliteUrl"));
+	   		sqlUrl = prop.getProperty("SqliteUrl");
+	   		
+	   	} catch (IOException ex) {
+	   		ex.printStackTrace();
+	   	} finally {
+	   		if (input != null) {
+	   			try {
+	   				input.close();
+	   			} catch (IOException e) {
+	   				e.printStackTrace();
+	   			}
+	   		}
+	   	}
+	  
+	  
+	  if (Status == "Send"){
+	  
+ 
+		  Sqlite sql = new Sqlite();
+		  Connection sqlConn = sql.connect(sqlUrl);
+		  boolean DocuSignInsert = sql.insertNew(Document, Status, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail, sqlConn);;
+		
+		  if (DocuSignInsert == true){
+			    
+			    String PathDocument = RequestSigntureFilePath + Document;
+			    
+			    DocSign sigrequest = new DocSign();
+			    
+				sigrequest.RequestASignature(PathDocument,CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail,UserName, Password, IntegratorKey,  BaseUrl);
+				EnvelopeId = sigrequest.EnvelopeId;
+				String NewStatus = sigrequest.Status;
+			
+				boolean SqlUpdate= sql.update(EnvelopeId, Status, Document,NewStatus, sql.connect(sqlUrl));
+				
+				
+		        if (SqlUpdate = false){
+		        	
+		        	System.out.println("Cound not Update");
+		        }
+		        else{
+		        	System.out.println("Updated");
+		        }
+		  }
+		  else{
+			  System.out.println("Cound not insert");
+			  
+		  }
+		  
+		  
+		  
+		  
+	  }
+	  else 
+	  {
+		  
+		  
+		  
+	  }*/
+		  
+  }
+   	
+    /*	ApiClient apiClient = new ApiClient(BaseUrl);
 
 		String creds = createAuthHeaderCreds(UserName, Password, IntegratorKey);
 		apiClient.addDefaultHeader("X-DocuSign-Authentication", creds);
@@ -92,9 +368,9 @@ public class docusignMain {
 			
 		} catch (ApiException ex) {
 			System.out.println("Exception: " + ex);
-		}
+		}*/
 		
-		RequestASignature(SignTest1File,UserName, Password, IntegratorKey,  BaseUrl);
+	
 	//ListDocuments( UserName,Password, IntegratorKey,  BaseUrl, EnvelopeId) ;
 	//	DownLoadEnvelopeDocuments(SignTest1File,UserName,Password, IntegratorKey, BaseUrl, EnvelopeId);
 //	Envelope getEnvelope  = 
@@ -136,13 +412,93 @@ public class docusignMain {
 		
 		
 		
-	}
+	
 
   
+  private Connection connect() {
+      // SQLite connection string
+      String url = "jdbc:sqlite:C://sqlite/db/test.db";
+      Connection conn = null;
+      try {
+          conn = DriverManager.getConnection(url);
+      } catch (SQLException e) {
+          System.out.println(e.getMessage());
+      }
+      return conn;
+  }
+  
+  public boolean insert(String Document,String CustomerSignee,String CompanySignee,String Status,String CompanySigneeName,String CompanySigneeEmail,String CustomerSigneeName,String CustomerSigneeEmail) {
+	  Date date = new Date();
+	 
+	  String sql = "INSERT INTO DocuSign(Document,Status,CompanySigneeName,CompanySigneeEmail,CustomerSigneeName,CustomerSigneeEmail,DateCreated) VALUES(?,?,?,?,?,?,?,?,?)";
 
+      try (Connection conn = this.connect();
+          PreparedStatement pstmt = conn.prepareStatement(sql)) {
+          pstmt.setString(1, Document);
+          pstmt.setString(4, Status);
+          pstmt.setString(5, CompanySigneeName);
+          pstmt.setString(6, CompanySigneeEmail);
+          pstmt.setString(6, CustomerSigneeName);
+          pstmt.setString(6, CustomerSigneeEmail);
+          pstmt.setString(7,date.toString());
+          pstmt.executeUpdate();
+          return true;
+      } catch (SQLException e) {
+          System.out.println(e.getMessage());
+        return false;
+      }
+      
+      
+      
+  }
 
+  public void selectAll(){
+      String sql = "SELECT Document,Status,CompanySigneeName,CompanySigneeEmail,CustomerSigneeName,CustomerSigneeEmail FROM DocuSign WHERE Status ='Send'";
+      
+      try (Connection conn = this.connect();
+           Statement stmt  = conn.createStatement();
+           ResultSet rs    = stmt.executeQuery(sql)){
+          
+          // loop through the result set
+          while (rs.next()) {
+        	  
+        	  
+              System.out.println(rs.getInt("id") +  "\t" + 
+                                 rs.getString("name") + "\t" +
+                                 rs.getDouble("capacity"));
+          }
+      } catch (SQLException e) {
+          System.out.println(e.getMessage());
+      }
+  }
+  
+  
+  
+  public void update(String EnvelopeId, String Status, String Document) {
+	  Date date = new Date();
+	  String DateUpdated = date.toString();
+	  
+      String sql = "UPDATE DocuSign SET EnvelopeId = ? , "
+              + "Status = ?, DateUpdated = ?" 
+              + "WHERE Document = ? AND EnvelopeId IS NULL";
 
-
+      try (Connection conn = this.connect();
+              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+          
+          // set the corresponding param
+          pstmt.setString(1, EnvelopeId);
+          pstmt.setString(2, Status);
+          pstmt.setString(3, Document);
+          pstmt.setString(4, DateUpdated);
+          // update 
+          pstmt.executeUpdate();
+      } catch (SQLException e) {
+          System.out.println(e.getMessage());
+      }
+  }
+  
+  
+  
 	private static String createAuthHeaderCreds(String userName, String password, String integratorKey) {
 		DocuSignCredentials dsCreds = new DocuSignCredentials(userName, password, integratorKey);
 
@@ -156,6 +512,10 @@ public class docusignMain {
 
 		return creds;
 	   }
+	
+
+	
+	
 	
 	private static void RequestASignature(String SignTest1File,String UserName,String Password, String IntegratorKey, String BaseUrl) {
 
@@ -191,7 +551,7 @@ public class docusignMain {
 		Signer signer = new Signer();
 		signer.setEmail("PDScott@Express-Scripts.com");
 	//	signer.setEmail("CJGreer@Express-Scripts.com");
-	//	signer.setEmail(UserName);
+		signer.setEmail(UserName);
 	//	signer.setName("Chris Greer");
 		signer.setName("Patty Scott");
 		signer.setRecipientId("1");
@@ -205,7 +565,9 @@ public class docusignMain {
 		signHere.setXPosition("100");
 		signHere.setYPosition("100");
 		signHere.setScaleValue("0.5");
-
+	
+		
+		
 		List<SignHere> signHereTabs = new ArrayList<SignHere>();
 		signHereTabs.add(signHere);
 		Tabs tabs = new Tabs();
@@ -257,11 +619,16 @@ public class docusignMain {
 			EnvelopeSummary envelopeSummary = envelopesApi.createEnvelope(accountId, envDef);
 
 			Assert.assertNotNull(envelopeSummary);
-			Assert.assertNotNull(envelopeSummary.getEnvelopeId());
+			String envelopeId = (envelopeSummary.getEnvelopeId());
+			String status =  envelopeSummary.getStatus();
+			
 			Assert.assertEquals("sent", envelopeSummary.getStatus());
 
 			System.out.println("EnvelopeSummary: " + envelopeSummary);
 
+			
+			
+			
 		} catch (ApiException ex) {
 			System.out.println("Exception: " + ex);
 			Assert.assertEquals(null, ex);
