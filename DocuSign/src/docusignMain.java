@@ -65,7 +65,7 @@ public class docusignMain {
 	  String UserName;
 	  String Password;
 	  String Request;
-	  
+	  //Use to send a document for signature
 	public docusignMain(String Request, String Document, String CompanySigneeName, String CompanySigneeEmail, String CustomerSigneeName, String CustomerSigneeEmail){
 		
 		boolean SqlUpdate = false;
@@ -115,7 +115,7 @@ public class docusignMain {
 			  
 			  Sqlite sql = new Sqlite();
 			  Connection sqlConn = sql.connect(sqlUrl);
-			  boolean DocuSignInsert = sql.insertNew(Document, Status, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail, sqlConn);;
+			  boolean DocuSignInsert = sql.insertNew(Document, Request, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail, sqlConn);;
 			
 			  if (DocuSignInsert == true){
 				    
@@ -127,7 +127,7 @@ public class docusignMain {
 					EnvelopeId = sigrequest.EnvelopeId;
 					String NewStatus = sigrequest.Status;
 				
-					SqlUpdate= sql.update(EnvelopeId, Status, Document,NewStatus, sql.connect(sqlUrl));
+					SqlUpdate= sql.update(EnvelopeId, Request, Document,NewStatus, sql.connect(sqlUrl));
 					
 					
 			        if (SqlUpdate = false){
@@ -148,6 +148,7 @@ public class docusignMain {
 		
 	   
 	}
+	//--use to get the document
 	public docusignMain(String Request){
 		Statement stmt = null;
 		Properties prop = new Properties();
@@ -187,7 +188,7 @@ public class docusignMain {
 		
 		
 		if (Request == "Retrieve"){
-			
+			System.out.println("in retrive");		
 			
 			try{
 				
@@ -197,10 +198,12 @@ public class docusignMain {
 			 Connection sqlConn = sql.connect(sqlUrl);
 			 sqlConn.setAutoCommit(false);
 			 stmt = sqlConn.createStatement();
-			 ResultSet rs  = stmt.executeQuery("Select Document, EnvelopeId from DocuSign where Status='Sent'");
+			 ResultSet rs  = stmt.executeQuery("Select Document, EnvelopeId from DocuSign where Status='sent'");
+			 System.out.println("After Result Set");
 			 while ( rs.next() ) {
 		         String Document = rs.getString("Document");
 		         String EnvelopeId = rs.getString("EnvelopeId");
+		         System.out.println("in while");	
 		         getDocument.DownLoadEnvelopeDocuments(Document,UserName,Password,IntegratorKey, BaseUrl, EnvelopeId,SignedFilesPath); 
 			 }
 			
@@ -243,10 +246,11 @@ public class docusignMain {
 		  String CustomerSigneeName= "Customer Signee";
 		  String CustomerSigneeEmail= "hescobe@gmail.com";
 		  String Status= "Send";
+	  docusignMain sendDoc= new docusignMain("Send", "test5.pdf", "Bert Escobedo", "hescobedo@hotmail.com", "Dude Escobedo", "hescobedo@hotmail.com");
+		 // docusignMain getDoc = new docusignMain("Retrieve");
 		   
-		
-		  docusignMain dMain = 
-		  new docusignMain("Send", Document, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail);
+		 // docusignMain dMain = 
+		//  new docusignMain("Send", Document, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail);
 		//  dMain..
 		  
 		  /*		 
