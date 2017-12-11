@@ -47,10 +47,11 @@ import java.util.Properties;
 
 import com.migcomponents.migbase64.Base64;
 
-public class docusignMain {
+public class ESIdocusign {
 
 	 String IntegratorKey; 
 	 String sqlUrl = null;
+	 String TemplateId;
 	 String BaseUrl = "https://demo.docusign.net/restapi";
 	 String RequestSignatureFilePath = null;
 	 String SignedFilesPath = null;
@@ -66,25 +67,29 @@ public class docusignMain {
 	  String UserName;
 	  String Password;
 	  String Request;
-	  //Use to send a document for signature
-	public docusignMain(String Request, String Document, String CompanySigneeName, String CompanySigneeEmail, String CustomerSigneeName, String CustomerSigneeEmail){
+	  String ProxyPort;
+	  String ProxyHost;
+	  
+	  Statement stmt = null;
+	  //Use to send a document using two Signatures
+	public ESIdocusign(String Request, String Document, String CompanySigneeName, String CompanySigneeEmail, String CustomerSigneeName, String CustomerSigneeEmail){
 		
 		boolean SqlUpdate = false;
-	 
+	    String TemplateType = "TwoSignature";
 		String AccountId = null;
-
-		  
-		 // String Status= args[1];
-		  
-		    Properties prop = new Properties();
-		   	InputStream input = null;
+	    Properties prop = new Properties();
+	   	InputStream input = null;
 
 		   	try {
 		   		input = new FileInputStream("C:\\Users\\humberto\\OneDrive\\GitRepository\\DocuSign\\src\\resources\\config\\config.properties");
-
+		   		//Now, proxies requiring Basic authentication when setting up a tunnel 
+		   		//for HTTPS will no longer succeed by default. If required, 
+		   		//this authentication scheme can be reactivated by removing Basic from
+		   		//the jdk.http.auth.tunneling.disabledSchemes networking property, 
+		   		//or by setting a system property of the same name to "" ( empty ) on the command line.
+		   		System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
 		   		// load a properties file
 		   		prop.load(input);
-
 		   		// get the property value and print it out
 		   		System.out.println(prop.getProperty("IntegratorKey"));
 		   		 IntegratorKey=prop.getProperty("IntegratorKey");
@@ -98,7 +103,17 @@ public class docusignMain {
 		   		RequestSignatureFilePath = prop.getProperty("RequestSignatureFilePath");
 		   		System.out.println(prop.getProperty("SqliteUrl"));
 		   		sqlUrl = prop.getProperty("SqliteUrl");
-		   		
+		   		ProxyPort= prop.getProperty("ProxyPort");
+		   		ProxyHost = prop.getProperty("ProxyPort");
+		     	//Now, proxies requiring Basic authentication when setting up a tunnel 
+		   		//for HTTPS will no longer succeed by default. If required, 
+		   		//this authentication scheme can be reactivated by removing Basic from
+		   		//the jdk.http.auth.tunneling.disabledSchemes networking property, 
+		   		//or by setting a system property of the same name to "" ( empty ) on the command line.
+		   		System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+		   		System.setProperty("http.proxyHost", ProxyHost);
+		   		System.setProperty("http.proxyPort", ProxyPort);
+
 		   	} catch (IOException ex) {
 		   		ex.printStackTrace();
 		   	} finally {
@@ -112,25 +127,37 @@ public class docusignMain {
 		   	}
 		
 		if (Request == "Send"){
-			  
-			  
+	  
 			  Sqlite sql = new Sqlite();
 			  Connection sqlConn = sql.connect(sqlUrl);
+			  
+			  
 			  boolean DocuSignInsert = sql.insertNew(Document, Request, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail, sqlConn);;
-			
 			  if (DocuSignInsert == true){
 				    
 				    String PathDocument = RequestSignatureFilePath + Document;
+					 try {
+						Connection sqlConn2 = sql.connect(sqlUrl);
+						stmt = sqlConn2.createStatement();
+						ResultSet rstmpl  = stmt.executeQuery("Select [Template Id] from CompositeTemplate where TemplateType = 'TwoSignature'");
+						 while ( rstmpl .next() ) {
+							 String TemplateId = rstmpl.getString("Template Id");
+					         System.out.println("TemplateId: " + TemplateId);
+						 }   
+					 } catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				    
-				    DocSign sigrequest = new DocSign();
 				    
-					sigrequest.RequestASignature(PathDocument,CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail,UserName, Password, IntegratorKey,  BaseUrl);
+				    DocuSign sigrequest = new DocuSign();
+				 
+					sigrequest.RequestASignature(PathDocument,CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail,UserName, Password, IntegratorKey,  BaseUrl,TemplateId);
 					EnvelopeId = sigrequest.EnvelopeId;
 					String NewStatus = sigrequest.Status;
 				
 					SqlUpdate= sql.update(EnvelopeId, Request, Document,NewStatus, sql.connect(sqlUrl));
-					
-					
+		
 			        if (SqlUpdate = false){
 			        	Response = "Cound not Update Sqlite";
 			        	System.out.println("Could not Update");
@@ -149,8 +176,8 @@ public class docusignMain {
 		
 	   
 	}
-	//--use to get the document
-	public docusignMain(String Request){
+	//--use to get the signed document
+	public ESIdocusign(String Request){
 		Statement stmt = null;
 		Properties prop = new Properties();
 	   	InputStream input = null;
@@ -193,7 +220,7 @@ public class docusignMain {
 			
 			try{
 				
-		   DocSign getDocument = new DocSign();
+		   DocuSign getDocument = new DocuSign();
 			
 			Sqlite sql = new Sqlite();
 			 Connection sqlConn = sql.connect(sqlUrl);
@@ -204,7 +231,8 @@ public class docusignMain {
 			 while ( rs.next() ) {
 		         String Document = rs.getString("Document");
 		         String EnvelopeId = rs.getString("EnvelopeId");
-		         System.out.println("in while");	
+		         System.out.println("in while");
+		         
 		         getDocument.DownLoadEnvelopeDocuments(Document,UserName,Password,IntegratorKey, BaseUrl, EnvelopeId,SignedFilesPath); 
 			 }
 			
@@ -215,11 +243,7 @@ public class docusignMain {
 			
 			
 		}
-		
-		
-		
-		
-		   
+			   
 	}  
 	  
   public static void main (String[] args) {
@@ -227,6 +251,7 @@ public class docusignMain {
 	     String UserName = "hescobedo@hotmail.com";
 	     String Password = "Beanbag01$";
 		 String IntegratorKey = "f771b51b-9943-475e-9cf6-d827df69488c"; 
+		 String TemplateId = "9435e702-f428-4683-82d0-a90fe481d68a";
 		 String sqlUrl = null;
 		// final String ClientSecret = "b4dccdbe-232f-46cc-96c5-b2f0f7448f8f";
 		 //final String RedirectURI = "https://www.docusign.com/api";
@@ -245,181 +270,19 @@ public class docusignMain {
 		  String CompanySigneeName= "Company Signee";
 		  String CompanySigneeEmail= "hescobedo@hotmail.com";
 		  String CustomerSigneeName= "Customer Signee";
-		  String CustomerSigneeEmail= "hescobe@gmail.com";
+		  String CustomerSigneeEmail= "hescobedo@hotmail.com";;
 		  String Status= "Send";
-	  docusignMain sendDoc= new docusignMain("Send", "test5.pdf", "Bert Escobedo", "hescobedo@hotmail.com", "Dude Escobedo", "hescobedo@hotmail.com");
-		 // docusignMain getDoc = new docusignMain("Retrieve");
-		   
-		 // docusignMain dMain = 
-		//  new docusignMain("Send", Document, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail);
-		//  dMain..
-		  
-		  /*		 
-        String AccountId = null;
-
- 
-	     Properties prop = new Properties();
-	   	InputStream input = null;
-
-	   	try {
-//  /resources/config/config.properties
-	   		input = new FileInputStream("C:\\Users\\humberto\\OneDrive\\GitRepository\\DocuSign\\src\\resources\\config\\config.properties");
-
-	   		// load a properties file
-	   		prop.load(input);
-
-	   		// get the property value and print it out
-	   		System.out.println(prop.getProperty("IntegratorKey"));
-	   		 IntegratorKey=prop.getProperty("IntegratorKey");
-	   		System.out.println(prop.getProperty("UserName"));
-	   		UserName = prop.getProperty("UserName");
-	   		System.out.println(prop.getProperty("Password"));
-	   		Password =prop.getProperty("Password");
-	   		System.out.println(prop.getProperty("BaseUrl"));
-	   		BaseUrl = prop.getProperty("BaseUrl");
-	   		System.out.println(prop.getProperty("RequestSignatureFilePath"));
-	   		RequestSigntureFilePath = prop.getProperty("RequestSignatureFilePath");
-	   		System.out.println(prop.getProperty("SqliteUrl"));
-	   		sqlUrl = prop.getProperty("SqliteUrl");
-	   		
-	   	} catch (IOException ex) {
-	   		ex.printStackTrace();
-	   	} finally {
-	   		if (input != null) {
-	   			try {
-	   				input.close();
-	   			} catch (IOException e) {
-	   				e.printStackTrace();
-	   			}
-	   		}
-	   	}
-	  
-	  
-	  if (Status == "Send"){
-	  
- 
-		  Sqlite sql = new Sqlite();
-		  Connection sqlConn = sql.connect(sqlUrl);
-		  boolean DocuSignInsert = sql.insertNew(Document, Status, CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail, sqlConn);;
+		  // "Chris Greer", "CJGreer@Express-Scripts.com", "Patty Scott", "PDScott@Express-Scripts.com"
 		
-		  if (DocuSignInsert == true){
-			    
-			    String PathDocument = RequestSigntureFilePath + Document;
-			    
-			    DocSign sigrequest = new DocSign();
-			    
-				sigrequest.RequestASignature(PathDocument,CompanySigneeName, CompanySigneeEmail, CustomerSigneeName, CustomerSigneeEmail,UserName, Password, IntegratorKey,  BaseUrl);
-				EnvelopeId = sigrequest.EnvelopeId;
-				String NewStatus = sigrequest.Status;
-			
-				boolean SqlUpdate= sql.update(EnvelopeId, Status, Document,NewStatus, sql.connect(sqlUrl));
-				
-				
-		        if (SqlUpdate = false){
-		        	
-		        	System.out.println("Cound not Update");
-		        }
-		        else{
-		        	System.out.println("Updated");
-		        }
-		  }
-		  else{
-			  System.out.println("Cound not insert");
-			  
-		  }
-		  
-		  
-		  
-		  
-	  }
-	  else 
-	  {
-		  
-		  
-		  
-	  }*/
-		  
+		//	signer.setEmail("PDScott@Express-Scripts.com");
+			//	signer.setEmail("CJGreer@Express-Scripts.com");
+			//	signer.setName("Chris Greer");
+			//	signer.setName("Patty Scott");
+//	  ESIdocusign sendDoc= new ESIdocusign("Send", "Accredo 340B Pharmacy Services Agreement_RuntimeDocument.pdf", "Bert Escobedo", "hescobedo@hotmail.com", "Dude Escobedo", "hescobedo@hotmail.com");
+	  ESIdocusign sendDoc= new ESIdocusign("Send", "Accredo 340B Pharmacy Services Agreement_RuntimeDocument.pdf", CompanySigneeName, CompanySigneeEmail,CustomerSigneeName, CustomerSigneeEmail);
   }
-   	
-    /*	ApiClient apiClient = new ApiClient(BaseUrl);
-
-		String creds = createAuthHeaderCreds(UserName, Password, IntegratorKey);
-		apiClient.addDefaultHeader("X-DocuSign-Authentication", creds);
-		Configuration.setDefaultApiClient(apiClient);
-
-		try {
-
-			AuthenticationApi authApi = new AuthenticationApi();
-			AuthenticationApi.LoginOptions loginOps = authApi.new LoginOptions();
-			loginOps.setApiPassword("true");
-			loginOps.setIncludeAccountIdGuid("true");
-			LoginInformation loginInfo = authApi.login(loginOps);
-
-			Assert.assertNotSame(null, loginInfo);
-			Assert.assertNotNull(loginInfo.getLoginAccounts());
-			Assert.assertTrue(loginInfo.getLoginAccounts().size() > 0);
-			List<LoginAccount> loginAccounts = loginInfo.getLoginAccounts();
-			Assert.assertNotNull(loginAccounts.get(0).getAccountId());
-            AccountId  =loginAccounts.get(0).getAccountId();
-			System.out.println("LoginInformation: " + loginInfo);
-
-			// parse first account's baseUrl
-			String[] accountDomain = loginInfo.getLoginAccounts().get(0).getBaseUrl().split("/v2");
-
-			// below code required for production, no effect in demo (same
-			// domain)
-			apiClient.setBasePath(accountDomain[0]);
-			Configuration.setDefaultApiClient(apiClient);
-			
-		} catch (ApiException ex) {
-			System.out.println("Exception: " + ex);
-		}*/
-		
-	
-	//ListDocuments( UserName,Password, IntegratorKey,  BaseUrl, EnvelopeId) ;
-	//	DownLoadEnvelopeDocuments(SignTest1File,UserName,Password, IntegratorKey, BaseUrl, EnvelopeId);
-//	Envelope getEnvelope  = 
-		//EnvelopesApi.getEnvelope(AccountId, AccountId);
-		
-	/*	EnvelopesApi getEnv = new EnvelopesApi();
-		try {
-			Envelope Env = new Envelope();
-			Env = getEnv.getEnvelope(AccountId, EnvelopeId);
-			String status = Env.getStatus();
-			System.out.println("EnvelopeStatus: " + status);
-			Assert.assertNotNull(status);
-		} catch (ApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		// use the |accountId| we retrieved through the Login API
-		//String accountId = loginAccounts.get(0).getAccountId();
-
-		// instantiate a new EnvelopesApi object
-		EnvelopesApi envelopesApi = new EnvelopesApi();  
-
-		// the list status changes call requires at least a from_date
-		EnvelopesApi.ListStatusChangesOptions options = envelopesApi.new ListStatusChangesOptions();
-
-		// set from date to filter envelopes (ex: Dec 1, 2015)
-		options.setFromDate("2015/12/01");
-
-		// call the listStatusChanges() API
-		try {
-			EnvelopesInformation envelopes = envelopesApi.listStatusChanges(AccountId, options);
-            System.out.println("EnvelopesInformation: " + envelopes);
-		
-		} catch (ApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		
-		
-		
-	
-
-  
+			  
+	 
   private Connection connect() {
       // SQLite connection string
       String url = "jdbc:sqlite:C://sqlite/db/test.db";
@@ -522,7 +385,7 @@ public class docusignMain {
 	
 	
 	
-	private static void RequestASignature(String SignTest1File,String UserName,String Password, String IntegratorKey, String BaseUrl) {
+	private static void RequestASignature(String SignTest1File,String UserName,String Password, String IntegratorKey, String BaseUrl, String TemplateId) {
 
 		byte[] fileBytes = null;
 		try {

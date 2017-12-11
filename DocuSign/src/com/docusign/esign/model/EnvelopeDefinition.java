@@ -1,5 +1,6 @@
 package com.docusign.esign.model;
 
+import java.util.List;
 import java.util.Objects;
 import com.docusign.esign.model.Attachment;
 import com.docusign.esign.model.CompositeTemplate;
@@ -15,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-
+import com.esi.docusigntemplate.*;
 
 
 
@@ -36,7 +37,10 @@ public class EnvelopeDefinition   {
   private String brandLock = null;
   private String certificateUri = null;
   private String completedDateTime = null;
-  private java.util.List<CompositeTemplate> compositeTemplates = new java.util.ArrayList<CompositeTemplate>();
+  
+  private java.util.List<com.esi.docusigntemplate.CompositeTemplate> compositeTemplates = new java.util.ArrayList<com.esi.docusigntemplate.CompositeTemplate>();
+
+  
   private String createdDateTime = null;
   private CustomFields customFields = null;
   private String customFieldsUri = null;
@@ -269,10 +273,10 @@ public class EnvelopeDefinition   {
   
   @ApiModelProperty(value = "A complex type that can be added to create envelopes from a combination of DocuSign templates and PDF forms. The basic envelope remains the same, while the Composite Template adds new document and template overlays into the envelope. There can be any number of Composite Template structures in the envelope.")
   @JsonProperty("compositeTemplates")
-  public java.util.List<CompositeTemplate> getCompositeTemplates() {
+  public java.util.List<com.esi.docusigntemplate.CompositeTemplate> getCompositeTemplates() {
     return compositeTemplates;
   }
-  public void setCompositeTemplates(java.util.List<CompositeTemplate> compositeTemplates) {
+  public void setCompositeTemplates(java.util.List<com.esi.docusigntemplate.CompositeTemplate> compositeTemplates) {
     this.compositeTemplates = compositeTemplates;
   }
 
@@ -1065,5 +1069,6 @@ public class EnvelopeDefinition   {
     }
     return o.toString().replace("\n", "\n    ");
   }
+
 }
 
